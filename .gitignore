@@ -14,6 +14,7 @@ data/raw_docs/*
 data/extracted/
 data/clean/
 data/chunks/
+data/eval/runs/
 chroma_db/
 *.log
 

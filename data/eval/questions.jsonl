@@ -1,0 +1,20 @@
+{"id": "q01", "question": "Qual foi o total do ativo do Flamengo em 31 de dezembro de 2023?", "expected": ["1.389.902"], "gold_year": "2023", "category": "balanco"}
+{"id": "q02", "question": "Qual foi o total do ativo em 31 de dezembro de 2024?", "expected": ["1.531.041"], "gold_year": "2024", "category": "balanco"}
+{"id": "q03", "question": "Qual foi o total do ativo em 31 de dezembro de 2025?", "expected": ["1.992.348"], "gold_year": "2025", "category": "balanco"}
+{"id": "q04", "question": "Qual era o patrimônio líquido total do Clube ao fim de 2023?", "expected": ["654.091", "654 milhões"], "gold_year": "2023", "category": "balanco"}
+{"id": "q05", "question": "Qual o saldo de caixa e equivalentes de caixa no balanço patrimonial de 2023?", "expected": ["234.487"], "gold_year": "2023", "category": "balanco"}
+{"id": "q06", "question": "Qual foi o superávit do exercício de 2023 (controladora)?", "expected": ["319.545", "320 milhões"], "gold_year": "2023", "category": "resultado"}
+{"id": "q07", "question": "O Flamengo teve superávit ou déficit no exercício de 2024?", "expected": ["déficit", "734"], "gold_year": "2024", "category": "resultado"}
+{"id": "q08", "question": "Qual foi a receita operacional líquida de 2023 (controladora)?", "expected": ["1.315.873"], "gold_year": "2023", "category": "resultado"}
+{"id": "q09", "question": "Qual foi a receita operacional líquida de 2024 (controladora)?", "expected": ["1.142.151"], "gold_year": "2024", "category": "resultado"}
+{"id": "q10", "question": "Qual o valor total da provisão para contingências consolidada em 2024?", "expected": ["95.467"], "gold_year": "2024", "category": "nota"}
+{"id": "q11", "question": "Quanto foi provisionado para contingências trabalhistas em 2024 (consolidado)?", "expected": ["83.135"], "gold_year": "2024", "category": "nota"}
+{"id": "q12", "question": "Qual o saldo de caixa restrito em 2024, segundo a nota de caixa e equivalentes?", "expected": ["41.662"], "gold_year": "2024", "category": "nota"}
+{"id": "q13", "question": "Qual o total de caixa, equivalentes e caixa restrito da controladora em 2025?", "expected": ["195.081"], "gold_year": "2025", "category": "nota"}
+{"id": "q14", "question": "Qual foi o total de despesas administrativas da controladora em 2024?", "expected": ["113.121"], "gold_year": "2024", "category": "nota"}
+{"id": "q15", "question": "Qual foi o superávit histórico anunciado pela diretoria para o ano de 2023?", "expected": ["320 milhões"], "gold_year": "2023", "category": "narrativa"}
+{"id": "q16", "question": "Por que a premiação recebida em 2023 foi menor do que a de 2022?", "expected": ["Copa do Brasil", "Libertadores", "desempenho esportivo", "premiação"], "gold_year": "2023", "category": "narrativa"}
+{"id": "q17", "question": "Para que servem os recursos de caixa restrito do Clube?", "expected": ["projetos incentivados", "esportes olímpicos"], "gold_year": "2024", "category": "narrativa"}
+{"id": "q18", "question": "Qual era o salário anual do técnico do Flamengo em 2024?", "expected": ["não encontrei"], "gold_year": null, "category": "sem_resposta"}
+{"id": "q19", "question": "Qual foi o resultado líquido da Fla-Flu Serviços S.A. no exercício de 2022?", "expected": ["não encontrei"], "gold_year": null, "category": "sem_resposta"}
+{"id": "q20", "question": "Quantos ingressos o Flamengo vendeu para jogos no Maracanã em 2023?", "expected": ["não encontrei"], "gold_year": null, "category": "sem_resposta"}

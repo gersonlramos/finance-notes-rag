@@ -33,11 +33,19 @@ llama-index-llms-ollama>=0.4
 ollama>=0.3
 
 # --- Milestone 5: avaliação ---
-ragas>=0.2
-datasets>=3.0
+# Métricas determinísticas (src/evaluate.py) não precisam de nada extra.
+#
+# RAGAS (src/ragas_eval.py) NÃO instala aqui: exige langchain 0.2.x, que fixa
+# numpy<2 e conflita com scipy/fastembed. Rode num venv separado:
+#   python -m venv .venv-ragas && .venv-ragas\Scripts\pip install ragas "langchain<0.3" "langchain-community<0.3"
 
 # --- Milestone 7: interface ---
 streamlit>=1.38
 
 # --- Utilidades ---
 python-dotenv>=1.0
+
+# --- Notebook (notebooks/comparacao-configuracoes.ipynb) ---
+pandas>=2.0
+matplotlib>=3.7
+notebook>=7.0

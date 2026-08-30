@@ -1,88 +1,155 @@
 # tech-notes-rag
 
-Pipeline RAG local para perguntas sobre as **demonstrações financeiras do
-Clube de Regatas do Flamengo** (exercícios de 2022 a 2025 + Relatório de
-Transparência do 2º Tri 2026). **Custo de nuvem: US$ 0** — OCR, embeddings,
-banco vetorial e LLM rodam na própria máquina.
+Pipeline RAG **100% local, custo de nuvem US$ 0**, que responde perguntas em
+linguagem natural sobre as **demonstrações financeiras do Clube de Regatas do
+Flamengo** (exercícios de 2022 a 2025 + Relatório de Transparência do 2º
+trimestre de 2026).
 
-> Em construção. Progresso por milestone abaixo.
->
-> Os PDFs de 2024 e 2025 não têm camada de texto (2024 = imagem por página,
-> 2025 = texto vetorizado). São processados por OCR local (Tesseract + `por`).
+Você pergunta *"qual foi a receita operacional líquida em 2023?"* e o sistema
+busca nos PDFs, recupera os trechos relevantes e o LLM redige a resposta —
+**fundamentada só nos documentos**, com citação da fonte, e admitindo quando a
+informação não está lá.
 
-## Stack
+```
+$ python -m src.rag "qual foi o total do ativo em 2023?"
+R$ 1.389.902 mil [Demonstração Financeira 2023.pdf, Balanço patrimonial]
+```
 
-| Camada | Ferramenta |
+## Por que este projeto
+
+- **Problema real:** demonstrações financeiras são densas, cheias de tabelas, e
+  algumas só existem como PDF escaneado. Consultar um número específico exige
+  garimpo manual.
+- **Custo zero:** OCR, embeddings, banco vetorial e LLM rodam na própria
+  máquina (uma ultrabook com CPU i5-8265U, sem GPU utilizável). Nenhuma chave de
+  API. Consciência de custo importa.
+- **Decisões medidas, não supostas:** cada escolha de arquitetura (modo de
+  busca, estratégia de chunking, linearização de tabela) foi testada contra um
+  conjunto de avaliação e mantida ou descartada pelos números.
+
+## Resultados
+
+20 perguntas de teste (`data/eval/questions.jsonl`), gabarito verificado nos
+documentos. Config final: **chunking fixo + BM25 + ano inferido da pergunta +
+`llama3.2:3b`**, tudo local.
+
+| retrieval hit@k | MRR | resposta correta | abstenção correta |
+|---|---|---|---|
+| 82% | 0,75 | 65% | 100% |
+
+- **retrieval hit@k** — o trecho com a resposta está entre os `k` recuperados.
+- **resposta correta** — a resposta gerada contém o valor/termo esperado.
+- **abstenção correta** — nas 3 perguntas sem resposta nos documentos, o sistema
+  respondeu "não encontrei" (nunca inventou).
+
+O que a avaliação decidiu (detalhes em [docs/avaliacao.md](docs/avaliacao.md)):
+
+| Decisão | Resultado medido |
 |---|---|
-| Framework RAG | LlamaIndex |
-| Embeddings | paraphrase-multilingual-MiniLM-L12-v2 (ONNX/fastembed, roda em CPU) |
-| Vector DB | ChromaDB (distância de cosseno) |
-| LLM de geração | Ollama (Qwen2.5 / Llama 3.1) |
-| Avaliação | RAGAS |
-| Interface | Streamlit |
+| BM25 lexical vs. busca híbrida | BM25 **+24 pontos** — o embedding multilíngue pequeno é grosseiro demais para termos contábeis |
+| Inferir o ano da pergunta e filtrar | recupera tanto quanto o filtro manual (88%) |
+| Chunking de tamanho fixo vs. por seção | fixo **+6 pontos** — blocos uniformes ajudam o modelo pequeno |
+| Linearizar tabelas em frases | **−30 pontos** — inundou o índice; revertido |
 
-## Milestones
+O gargalo restante é o LLM de 3B lendo tabela (pega sub-linha em vez do total, ou
+a coluna "consolidado" em vez de "controladora"). O retrieval já está perto do teto.
 
-- [x] **1 — Ingestão + chunking** (`src/ingest.py`, `src/ocr.py`, `src/clean.py`)
-- [x] **2 — Embeddings + indexação** (`src/embed_index.py`)
-- [x] **3 — Retrieval** (`src/query.py`, sem LLM) — vector / bm25 / hybrid + filtro por ano
-- [ ] 4 — Geração com LLM local
-- [ ] 5 — Avaliação com RAGAS (`src/evaluate.py`)
-- [ ] 6 — Experimento: chunking A vs. B, com/sem reranking
-- [ ] 7 — Interface Streamlit + resultados no README
+## Arquitetura
 
-## Setup
+Ver [docs/arquitetura.md](docs/arquitetura.md).
+
+```
+                        INDEXAÇÃO (offline)                    CONSULTA (online)
+  data/raw_docs/*.pdf                                   pergunta
+        │                                                  │
+        ▼  pymupdf4llm  /  OCR (Tesseract-por)             ▼  guess_year()
+  data/extracted/*.md                                  filtro doc_year
+        │                                                  │
+        ▼  clean.py (limpeza, ~7 regras)                   ▼  BM25 (stemmer PT)
+  data/clean/*.md                                      top-k chunks
+        │                                                  │
+        ▼  chunking (SentenceSplitter 512/64)              ▼  monta prompt + contexto
+  data/chunks/fixed.jsonl                                   │
+        │                                                  ▼  Ollama · llama3.2:3b
+        ▼  MiniLM multilíngue (fastembed/ONNX)          resposta citada
+  ChromaDB (chroma_db/, cosseno)
+```
+
+| Camada | Ferramenta | Por quê |
+|---|---|---|
+| Framework | LlamaIndex | data-first, integra tudo |
+| Extração PDF | pymupdf4llm + Tesseract-`por` | tabelas viram markdown; OCR local para os PDFs escaneados de 2024/2025 |
+| Embeddings | `paraphrase-multilingual-MiniLM-L12-v2` (ONNX) | ~0,3 s/chunk em CPU; BGE-M3 seria melhor mas leva ~7 s/chunk nesta máquina |
+| Vector DB | ChromaDB (cosseno) | embutido, sem servidor |
+| Retrieval | BM25 (`bm25s`) + filtro de metadado | venceu a busca semântica na avaliação |
+| LLM | Ollama · `llama3.2:3b` | roda em CPU, ~40–70 s/resposta |
+| Avaliação | script próprio determinístico | resposta = número; matching direto é mais confiável que juiz LLM fraco |
+
+## Estrutura
+
+```
+src/
+  ingest.py        Etapas 1–2: carregar PDF (ou OCR) + limpar + chunking
+  ocr.py           OCR dos PDFs sem camada de texto (2024, 2025)
+  clean.py         limpeza do markdown extraído (letras espaçadas, cabeçalhos, etc.)
+  tables.py        linearização de tabelas — experimento (piorou, opt-in)
+  embed_index.py   Etapas 3–4: embeddings + indexação no ChromaDB
+  query.py         Etapa 5: retrieval (vector / bm25 / hybrid), sem LLM
+  rag.py           Etapa 6: pipeline completo, retrieval + geração
+  evaluate.py      Etapa 7: avaliação sobre data/eval/questions.jsonl
+  ragas_eval.py    RAGAS (venv separado — conflito de dependências)
+app/streamlit_app.py   interface de chat
+docs/avaliacao.md      análise completa dos resultados
+data/eval/questions.jsonl   conjunto de teste (versionado)
+```
+
+## Como rodar
+
+### Pré-requisitos
 
 ```bash
 python -m venv .venv
-.venv\Scripts\activate        # Windows
+.venv\Scripts\activate                 # Windows
 pip install -r requirements.txt
 
-# OCR (para os PDFs de 2024/2025):
+# OCR (para 2024/2025):
 winget install UB-Mannheim.TesseractOCR
 curl -L -o models/tessdata/por.traineddata \
   https://github.com/tesseract-ocr/tessdata_best/raw/main/por.traineddata
+
+# LLM local:
+winget install Ollama.Ollama
+ollama pull llama3.2:3b
 ```
 
-## Uso — Milestone 1
+Coloque os PDFs em `data/raw_docs/` (ou use o excerto em `data/sample_docs/`).
+
+### Pipeline
 
 ```bash
-# pipeline completo: extrai (ou OCR) -> limpa -> chunk
-python -m src.ingest --source data/raw_docs --strategy structural --show 5
-python -m src.ingest --source data/raw_docs --strategy fixed
-
-# ver o efeito de cada regra de limpeza (antes/depois)
-python -m src.clean
+python -m src.ingest --source data/raw_docs        # extrai + limpa + chunking
+python -m src.embed_index --rebuild                # indexa no ChromaDB
+python -m src.rag "qual foi o superávit em 2023?"  # pergunta
+streamlit run app/streamlit_app.py                 # ou pela interface
 ```
 
-Fluxo: `data/raw_docs/*.pdf` → `data/extracted/*.md` (cache da extração/OCR)
-→ `data/clean/*.md` (pós-limpeza) → `data/chunks/<estrategia>.jsonl`.
-
-Flags úteis: `--no-clean` (pula a limpeza), `--source data/sample_docs` (roda
-no excerto versionado, sem os PDFs grandes).
-
-## Uso — Milestone 2
+### Avaliação
 
 ```bash
-# indexa os chunks no ChromaDB (uma coleção por estratégia)
-python -m src.embed_index --strategy structural --rebuild
-python -m src.embed_index --strategy fixed --rebuild
-
-# busca de teste (sem LLM ainda)
-python -m src.embed_index --strategy structural --probe "saldo de caixa em 2023?"
+python -m src.evaluate                 # roda as 20 perguntas + métricas
+python -m src.evaluate --report-only   # recalcula do cache, sem LLM
 ```
 
-Índice em `chroma_db/`. ~0.4 s/chunk nesta máquina (CPU).
+## Limitações conhecidas
 
-## Uso — Milestone 3 (retrieval, sem LLM)
+- **Hardware:** CPU sem GPU. Cada resposta leva ~40–70 s (`llama3.2:3b`).
+- **Leitura de tabela:** o modelo de 3B erra ~1/3 das perguntas cujo valor está
+  numa tabela grande. Um modelo maior resolveria, ao custo de ~2 min/resposta.
+- **OCR:** as tabelas de 2024/2025 vêm de OCR; o alinhamento de colunas é
+  aproximado.
+- **RAGAS:** exige `langchain 0.2.x` (fixa `numpy<2`), incompatível com o resto
+  do stack. Roda só em ambiente isolado.
 
-```bash
-# compara busca densa / lexical / híbrida na mesma pergunta
-python -m src.query "qual a provisão para contingências em 2024?" --compare
+## Licença
 
-# um modo só, com filtro por exercício
-python -m src.query "provisão para contingências" --mode bm25 --year 2024 --k 4
-```
-
-`--mode vector|bm25|hybrid` · `--year 2024` (filtra `doc_year`) · `--k N` ·
-`--strategy fixed|structural`.
+MIT — ver [LICENSE](LICENSE).
