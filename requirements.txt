@@ -1,0 +1,43 @@
+# ============================================================
+#  tech-notes-rag — dependências
+#  Agrupadas pelo milestone em que passam a ser usadas.
+#  Pode instalar tudo de uma vez; só o grupo do Milestone 1
+#  é necessário para começar.
+# ============================================================
+
+# --- Milestone 1: ingestão + chunking ---
+llama-index-core>=0.12,<0.15
+pymupdf4llm>=1.28,<2        # extrai PDF -> Markdown (chamado com use_ocr=False)
+onnxruntime>=1.19           # import implícito do pymupdf4llm 1.28
+pytesseract>=0.3.13         # OCR dos PDFs escaneados (2024, 2025) — via src/ocr.py
+tiktoken>=0.8                # contagem de tokens
+rich>=13.7                   # saída legível no terminal
+# Dependência de SISTEMA (não pip): Tesseract OCR + idioma 'por'
+#   winget install UB-Mannheim.TesseractOCR
+
+# --- Milestone 2: embeddings + indexação ---
+# Embedding roda em CPU via ONNX (fastembed). Sem torch, sem GPU.
+fastembed>=0.4
+llama-index-embeddings-fastembed>=0.3
+chromadb>=0.5
+llama-index-vector-stores-chroma>=0.4
+# Opcional — só se quiser rodar BGE-M3 (lento nesta máquina, ~7s/chunk):
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+#   pip install sentence-transformers llama-index-embeddings-huggingface
+
+# --- Milestone 3: retrieval ---
+llama-index-retrievers-bm25>=0.5   # busca lexical (BM25) + híbrida
+
+# --- Milestone 4: geração com LLM local ---
+llama-index-llms-ollama>=0.4
+ollama>=0.3
+
+# --- Milestone 5: avaliação ---
+ragas>=0.2
+datasets>=3.0
+
+# --- Milestone 7: interface ---
+streamlit>=1.38
+
+# --- Utilidades ---
+python-dotenv>=1.0
