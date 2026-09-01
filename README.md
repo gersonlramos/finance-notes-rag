@@ -142,9 +142,12 @@ python -m src.evaluate --report-only   # recalcula do cache, sem LLM
 
 ## Limitações conhecidas
 
-- **Hardware:** CPU sem GPU. Cada resposta leva ~40–70 s (`llama3.2:3b`).
-- **Leitura de tabela:** o modelo de 3B erra ~1/3 das perguntas cujo valor está
-  numa tabela grande. Um modelo maior resolveria, ao custo de ~2 min/resposta.
+- **Hardware:** CPU sem GPU utilizável. Resposta em ~40–70 s (`llama3.2:3b`).
+- **Leitura de tabela:** o `llama3.2:3b` erra ~1/3 das perguntas cujo valor está
+  numa tabela grande (pega a sub-linha ou a coluna errada, e às vezes confabula
+  o que "está incluído"). `qwen2.5:7b` (seletor da interface) sobe para 71% de
+  acerto, ao custo de ~2,5 min/resposta. Sempre confira o número no trecho
+  exibido abaixo da resposta.
 - **OCR:** as tabelas de 2024/2025 vêm de OCR; o alinhamento de colunas é
   aproximado.
 - **RAGAS:** exige `langchain 0.2.x` (fixa `numpy<2`), incompatível com o resto

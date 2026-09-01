@@ -56,7 +56,9 @@ def collection_name(strategy: str) -> str:
     return f"chunks_{strategy}"
 
 # --- LLM local (Milestone 4) --------------------------------------------
-# CPU i5-8265U: modelo 3B é o teto prático (~15-40s por resposta).
+# Avaliação (docs/avaliacao.md): llama3.2:3b 65% acerto / ~64s; qwen2.5:7b
+# 71% / ~153s (mantém abstenção); gemma2:2b 59% e quebra abstenção.
+# 3b é o padrão pelo equilíbrio. Troque no seletor da interface se quiser o 7b.
 OLLAMA_MODEL = "llama3.2:3b"
 OLLAMA_BASE_URL = "http://localhost:11434"
 OLLAMA_TIMEOUT = 900          # segundos. Prefill de prompt longo num i5-8265U

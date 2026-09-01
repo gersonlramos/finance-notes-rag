@@ -47,6 +47,27 @@ Ambiente: 100% local, CPU (i5-8265U). Embeddings `paraphrase-multilingual-MiniLM
    pergunta sem base documental. O prompt de sistema ("diga *não encontrei*")
    segura isso mesmo num modelo pequeno.
 
+## Experimento: modelo de geração
+
+Mesma config (chunking fixo + `bm25` + ano inferido), variando o LLM do Ollama:
+
+| Modelo | resposta correta | abstenção | tempo/pergunta |
+|---|---|---|---|
+| `gemma2:2b` | 59% | **falhou** (inventou salário) | 55 s |
+| **`llama3.2:3b`** (padrão) | 65% | 100% | 64 s |
+| `qwen2.5:7b-instruct` | **71%** | 100% | 153 s |
+
+- **`gemma2:2b`** é ~15% mais rápido mas quebra a abstenção — inventou "salário
+  do técnico R$ 9.756.000" para uma pergunta sem resposta. Descartado.
+- **`qwen2.5:7b`** acerta +6 pontos e mantém a abstenção, ao custo de 2,4× o
+  tempo (~2,5 min/resposta). Fica disponível como opção no seletor da interface.
+- A categoria `balanco` **não melhorou** com o 7B — lá a falha é o retrieval
+  (o chunk certo entra no top-3 só 40% das vezes), não o modelo.
+- Nota: modelos ≥ 7B precisam de `num_gpu=0` nesta máquina — a MX110 (2 GB)
+  não cabe as camadas e o offload deixa ~5× mais lento.
+
+`llama3.2:3b` continua o padrão pelo equilíbrio velocidade / qualidade / segurança.
+
 ## Experimento: chunking estrutural vs. tamanho fixo
 
 Mesma config (`bm25` + ano inferido, `llama3.2:3b`), variando a estratégia de
