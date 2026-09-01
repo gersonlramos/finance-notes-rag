@@ -79,7 +79,38 @@ def get_llm(model: str) -> Ollama:
         # sem isto o Ollama usa num_ctx pequeno e CORTA o contexto em silêncio
         context_window=config.OLLAMA_CONTEXT_WINDOW,
         keep_alive=config.OLLAMA_KEEP_ALIVE,
+        additional_kwargs={"num_predict": config.OLLAMA_NUM_PREDICT},
     )
+
+
+def _messages(question: str, hits) -> list[ChatMessage]:
+    return [
+        ChatMessage(role=MessageRole.SYSTEM, content=SYSTEM_PROMPT),
+        ChatMessage(role=MessageRole.USER, content=build_user_prompt(question, build_context(hits))),
+    ]
+
+
+def run_stream(question: str, *, strategy: str = "fixed", mode: str = "bm25",
+               k: int | None = None, year: str | None = None, model: str | None = None,
+               auto_year: bool = True):
+    """
+    Igual a run(), mas devolve (hits, gerador_de_tokens). O app Streamlit usa
+    para exibir a resposta se formando — a percepção de velocidade melhora muito.
+    """
+    k = k or config.GENERATION_TOP_K
+    model = model or config.OLLAMA_MODEL
+    if year is None and auto_year:
+        year = guess_year(question)
+    _check_ollama(model)
+    hits = retrieve(question, strategy, mode, k, year)
+    if not hits:
+        return [], iter(())
+
+    def tokens():
+        for chunk in get_llm(model).stream_chat(_messages(question, hits)):
+            yield chunk.delta or ""
+
+    return hits, tokens()
 
 
 def _check_ollama(model: str) -> None:
@@ -117,12 +148,8 @@ def run(question: str, *, strategy: str = "fixed", mode: str = "bm25",
     if not hits:
         return {"question": question, "answer": "", "contexts": [], "hits": [], "seconds": 0.0}
 
-    messages = [
-        ChatMessage(role=MessageRole.SYSTEM, content=SYSTEM_PROMPT),
-        ChatMessage(role=MessageRole.USER, content=build_user_prompt(question, build_context(hits))),
-    ]
     t0 = time.time()
-    resp = get_llm(model).chat(messages)
+    resp = get_llm(model).chat(_messages(question, hits))
     return {
         "question": question,
         "answer": str(resp.message.content).strip(),
