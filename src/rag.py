@@ -22,6 +22,7 @@ Uso:
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 import time
 
@@ -71,6 +72,12 @@ def build_user_prompt(question: str, context: str) -> str:
 
 
 def get_llm(model: str) -> Ollama:
+    opts = {"num_predict": config.OLLAMA_NUM_PREDICT}
+    # Modelos >= 7B: forçar CPU puro. A GeForce MX110 (2GB) só cabe uma fração
+    # das camadas e o Ollama fica trocando dados CPU<->GPU — fica MAIS lento que
+    # CPU sozinha (7B: ~15min com offload vs ~3min sem).
+    if re.search(r"\b(7|8|9|1[0-9])b\b", model.lower()):
+        opts["num_gpu"] = 0
     return Ollama(
         model=model,
         base_url=config.OLLAMA_BASE_URL,
@@ -79,7 +86,7 @@ def get_llm(model: str) -> Ollama:
         # sem isto o Ollama usa num_ctx pequeno e CORTA o contexto em silêncio
         context_window=config.OLLAMA_CONTEXT_WINDOW,
         keep_alive=config.OLLAMA_KEEP_ALIVE,
-        additional_kwargs={"num_predict": config.OLLAMA_NUM_PREDICT},
+        additional_kwargs=opts,
     )
 
 
