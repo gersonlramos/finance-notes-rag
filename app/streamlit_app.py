@@ -46,7 +46,7 @@ def _available_models() -> list[str]:
         return [config.OLLAMA_MODEL]
 
 
-st.title("📊 Demonstrações financeiras do Flamengo")
+st.title("Demonstrações financeiras do Flamengo")
 st.caption("RAG 100% local — busca nos PDFs de 2022–2026 e responde só com base neles.")
 
 with st.sidebar:
