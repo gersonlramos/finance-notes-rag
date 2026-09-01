@@ -80,18 +80,18 @@ if st.button("Perguntar", type="primary", disabled=not question):
     st.markdown("### Resposta")
     box = st.empty()
     t0 = time.time()
-    acc = ""
-    with st.status("Gerando… o 1º token pode levar ~30 s (o modelo lê o contexto).",
-                   expanded=False) as status:
-        try:
+    acc, last = "", 0.0
+    try:
+        with st.spinner("Gerando… o 1º token pode levar ~30 s (o modelo lê o contexto)."):
             for tok in tokens:
                 acc += tok
-                box.markdown(acc + " ▌")
-        except Exception as e:                     # Ollama caiu / timeout / modelo ocupado
-            status.update(label=f"Erro na geração: {e}", state="error")
-            st.stop()
-        status.update(label=f"Pronto em {time.time() - t0:.0f}s", state="complete")
-    box.markdown(acc or "_(resposta vazia)_")
+                if time.time() - last > 0.3:        # throttle: texto puro durante o stream
+                    box.text(acc)
+                    last = time.time()
+    except Exception as e:                          # Ollama caiu / timeout / modelo ocupado
+        st.error(f"Falha na geração: {e}")
+        st.stop()
+    box.markdown(acc or "_(resposta vazia)_")       # render final com markdown
     st.caption(f"{time.time() - t0:.0f}s · {mode} · k={k} · {model}" + (f" · ano {year}" if year else ""))
 
     st.markdown("### Trechos usados (confira a fundamentação)")
