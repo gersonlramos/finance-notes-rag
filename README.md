@@ -1,11 +1,11 @@
-# tech-notes-rag
+# finance-notes-rag
 
 Pipeline RAG **100% local, custo de nuvem US$ 0**, que responde perguntas em
 linguagem natural sobre as **demonstrações financeiras do Clube de Regatas do
 Flamengo** (exercícios de 2022 a 2025 + Relatório de Transparência do 2º
 trimestre de 2026).
 
-Você pergunta *"qual foi a receita operacional líquida em 2023?"* e o sistema
+Você pergunta _"qual foi a receita operacional líquida em 2023?"_ e o sistema
 busca nos PDFs, recupera os trechos relevantes e o LLM redige a resposta —
 **fundamentada só nos documentos**, com citação da fonte, e admitindo quando a
 informação não está lá.
@@ -33,9 +33,9 @@ R$ 1.389.902 mil [Demonstração Financeira 2023.pdf, Balanço patrimonial]
 documentos. Config final: **chunking fixo + BM25 + ano inferido da pergunta +
 `llama3.2:3b`**, tudo local.
 
-| retrieval hit@k | MRR | resposta correta | abstenção correta |
-|---|---|---|---|
-| 82% | 0,75 | 65% | 100% |
+| retrieval hit@k | MRR  | resposta correta | abstenção correta |
+| --------------- | ---- | ---------------- | ----------------- |
+| 82%             | 0,75 | 65%              | 100%              |
 
 - **retrieval hit@k** — o trecho com a resposta está entre os `k` recuperados.
 - **resposta correta** — a resposta gerada contém o valor/termo esperado.
@@ -44,12 +44,12 @@ documentos. Config final: **chunking fixo + BM25 + ano inferido da pergunta +
 
 O que a avaliação decidiu (detalhes em [docs/avaliacao.md](docs/avaliacao.md)):
 
-| Decisão | Resultado medido |
-|---|---|
-| BM25 lexical vs. busca híbrida | BM25 **+24 pontos** — o embedding multilíngue pequeno é grosseiro demais para termos contábeis |
-| Inferir o ano da pergunta e filtrar | recupera tanto quanto o filtro manual (88%) |
-| Chunking de tamanho fixo vs. por seção | fixo **+6 pontos** — blocos uniformes ajudam o modelo pequeno |
-| Linearizar tabelas em frases | **−30 pontos** — inundou o índice; revertido |
+| Decisão                                | Resultado medido                                                                               |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| BM25 lexical vs. busca híbrida         | BM25 **+24 pontos** — o embedding multilíngue pequeno é grosseiro demais para termos contábeis |
+| Inferir o ano da pergunta e filtrar    | recupera tanto quanto o filtro manual (88%)                                                    |
+| Chunking de tamanho fixo vs. por seção | fixo **+6 pontos** — blocos uniformes ajudam o modelo pequeno                                  |
+| Linearizar tabelas em frases           | **−30 pontos** — inundou o índice; revertido                                                   |
 
 O gargalo restante é o LLM de 3B lendo tabela (pega sub-linha em vez do total, ou
 a coluna "consolidado" em vez de "controladora"). O retrieval já está perto do teto.
@@ -75,15 +75,15 @@ Ver [docs/arquitetura.md](docs/arquitetura.md).
   ChromaDB (chroma_db/, cosseno)
 ```
 
-| Camada | Ferramenta | Por quê |
-|---|---|---|
-| Framework | LlamaIndex | data-first, integra tudo |
-| Extração PDF | pymupdf4llm + Tesseract-`por` | tabelas viram markdown; OCR local para os PDFs escaneados de 2024/2025 |
-| Embeddings | `paraphrase-multilingual-MiniLM-L12-v2` (ONNX) | ~0,3 s/chunk em CPU; BGE-M3 seria melhor mas leva ~7 s/chunk nesta máquina |
-| Vector DB | ChromaDB (cosseno) | embutido, sem servidor |
-| Retrieval | BM25 (`bm25s`) + filtro de metadado | venceu a busca semântica na avaliação |
-| LLM | Ollama · `llama3.2:3b` | roda em CPU, ~40–70 s/resposta |
-| Avaliação | script próprio determinístico | resposta = número; matching direto é mais confiável que juiz LLM fraco |
+| Camada       | Ferramenta                                     | Por quê                                                                    |
+| ------------ | ---------------------------------------------- | -------------------------------------------------------------------------- |
+| Framework    | LlamaIndex                                     | data-first, integra tudo                                                   |
+| Extração PDF | pymupdf4llm + Tesseract-`por`                  | tabelas viram markdown; OCR local para os PDFs escaneados de 2024/2025     |
+| Embeddings   | `paraphrase-multilingual-MiniLM-L12-v2` (ONNX) | ~0,3 s/chunk em CPU; BGE-M3 seria melhor mas leva ~7 s/chunk nesta máquina |
+| Vector DB    | ChromaDB (cosseno)                             | embutido, sem servidor                                                     |
+| Retrieval    | BM25 (`bm25s`) + filtro de metadado            | venceu a busca semântica na avaliação                                      |
+| LLM          | Ollama · `llama3.2:3b`                         | roda em CPU, ~40–70 s/resposta                                             |
+| Avaliação    | script próprio determinístico                  | resposta = número; matching direto é mais confiável que juiz LLM fraco     |
 
 ## Estrutura
 
