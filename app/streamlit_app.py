@@ -90,7 +90,9 @@ if st.button("Perguntar", type="primary", disabled=not question):
     t0 = time.time()
     acc, last = "", 0.0
     try:
-        with st.spinner("Gerando… o 1º token pode levar ~30 s (o modelo lê o contexto)."):
+        spin = "Gerando…" if model.startswith("claude") else \
+               "Gerando… o 1º token pode levar ~30 s (o modelo lê o contexto)."
+        with st.spinner(spin):
             for tok in tokens:
                 acc += tok
                 if time.time() - last > 0.3:        # throttle: texto puro durante o stream
@@ -99,7 +101,8 @@ if st.button("Perguntar", type="primary", disabled=not question):
     except Exception as e:                          # Ollama caiu / timeout / modelo ocupado
         st.error(f"Falha na geração: {e}")
         st.stop()
-    box.markdown(acc or "_(resposta vazia)_")       # render final com markdown
+    # escapa "$" senão o Streamlit lê "R$ 335 ... R$ 343" como fórmula LaTeX
+    box.markdown((acc or "_(resposta vazia)_").replace("$", r"\$"))
     st.caption(f"{time.time() - t0:.0f}s · {mode} · k={k} · {model}" + (f" · ano {year}" if year else ""))
 
     st.markdown("### Trechos usados (confira a fundamentação)")
