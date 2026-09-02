@@ -82,7 +82,7 @@ Ver [docs/arquitetura.md](docs/arquitetura.md).
 | Embeddings   | `paraphrase-multilingual-MiniLM-L12-v2` (ONNX) | ~0,3 s/chunk em CPU; BGE-M3 seria melhor mas leva ~7 s/chunk nesta máquina |
 | Vector DB    | ChromaDB (cosseno)                             | embutido, sem servidor                                                     |
 | Retrieval    | BM25 (`bm25s`) + filtro de metadado            | venceu a busca semântica na avaliação                                      |
-| LLM          | Ollama · `llama3.2:3b`                         | roda em CPU, ~40–70 s/resposta                                             |
+| LLM          | Ollama · `llama3.2:3b` (padrão) · `qwen2.5:7b` · Claude via API (opcional) | local e grátis por padrão; Claude é a válvula de escape para qualidade  |
 | Avaliação    | script próprio determinístico                  | resposta = número; matching direto é mais confiável que juiz LLM fraco     |
 
 ## Estrutura
@@ -148,6 +148,10 @@ python -m src.evaluate --report-only   # recalcula do cache, sem LLM
   o que "está incluído"). `qwen2.5:7b` (seletor da interface) sobe para 71% de
   acerto, ao custo de ~2,5 min/resposta. Sempre confira o número no trecho
   exibido abaixo da resposta.
+- **Claude via API (opcional, pago, não-local):** para a leitura de tabela, um
+  modelo forte resolve. Coloque `ANTHROPIC_API_KEY` no `.env` (ver `.env.example`)
+  e os modelos `claude-*` aparecem no seletor. Só a geração vai para a nuvem —
+  extração, embeddings e índice continuam locais.
 - **OCR:** as tabelas de 2024/2025 vêm de OCR; o alinhamento de colunas é
   aproximado.
 - **RAGAS:** exige `langchain 0.2.x` (fixa `numpy<2`), incompatível com o resto

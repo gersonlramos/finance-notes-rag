@@ -28,9 +28,10 @@ llama-index-vector-stores-chroma>=0.4
 # --- Milestone 3: retrieval ---
 llama-index-retrievers-bm25>=0.5   # busca lexical (BM25) + híbrida
 
-# --- Milestone 4: geração com LLM local ---
-llama-index-llms-ollama>=0.4
+# --- Milestone 4: geração ---
+llama-index-llms-ollama>=0.4        # LLM local (padrão)
 ollama>=0.3
+llama-index-llms-anthropic>=0.6     # opcional: Claude via API (precisa de ANTHROPIC_API_KEY)
 
 # --- Milestone 5: avaliação ---
 # Métricas determinísticas (src/evaluate.py) não precisam de nada extra.

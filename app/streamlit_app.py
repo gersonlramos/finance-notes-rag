@@ -30,20 +30,27 @@ st.set_page_config(page_title="RAG · Demonstrações Flamengo", page_icon="📊
 @st.cache_resource(show_spinner="Preparando (embeddings + LLM)...")
 def _warm(model: str):
     from src.embed_index import get_embed_model
+    from src.rag import is_claude
     get_embed_model()
-    try:                       # deixa o modelo residente para a 1ª pergunta não pagar a carga
-        get_llm(model).complete("ok")
-    except Exception:
-        pass
+    if not is_claude(model):   # aquece o Ollama local; para o Claude seria chamada paga
+        try:
+            get_llm(model).complete("ok")
+        except Exception:
+            pass
 
 
 def _available_models() -> list[str]:
+    import os
+
     import httpx
     try:
         tags = httpx.get(f"{config.OLLAMA_BASE_URL}/api/tags", timeout=3).json()
-        return sorted(m["name"] for m in tags.get("models", []))
+        models = sorted(m["name"] for m in tags.get("models", []))
     except Exception:
-        return [config.OLLAMA_MODEL]
+        models = [config.OLLAMA_MODEL]
+    if os.getenv("ANTHROPIC_API_KEY"):        # opção paga, só se houver chave no .env
+        models += ["claude-haiku-4-5", "claude-sonnet-5", "claude-opus-5"]
+    return models
 
 
 st.title("Demonstrações financeiras do Flamengo")

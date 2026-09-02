@@ -22,12 +22,13 @@ Uso:
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import sys
 import time
 
 import httpx
-from llama_index.core.llms import ChatMessage, MessageRole
+from llama_index.core.llms import LLM, ChatMessage, MessageRole
 from llama_index.llms.ollama import Ollama
 from rich.console import Console
 
@@ -71,7 +72,33 @@ def build_user_prompt(question: str, context: str) -> str:
     return f"Contexto:\n{context}\n\n---\nPergunta: {question}"
 
 
-def get_llm(model: str) -> Ollama:
+def is_claude(model: str) -> bool:
+    return model.lower().startswith("claude")
+
+
+def get_llm(model: str) -> LLM:
+    """
+    Devolve o LLM (interface LlamaIndex — .chat()/.stream_chat()).
+    - "claude-*"  -> API da Anthropic (precisa de ANTHROPIC_API_KEY). NÃO é local
+                     nem grátis; é a válvula de escape para qualidade máxima.
+    - resto       -> Ollama local (padrão, custo zero).
+    """
+    if is_claude(model):
+        from llama_index.llms.anthropic import Anthropic
+
+        key = os.getenv("ANTHROPIC_API_KEY")
+        if not key:
+            raise SystemExit(
+                "ANTHROPIC_API_KEY não definida. Coloque a chave no arquivo .env "
+                "(ANTHROPIC_API_KEY=sk-ant-...) para usar um modelo Claude."
+            )
+        return Anthropic(
+            model=model,
+            api_key=key,
+            temperature=config.GENERATION_TEMPERATURE,
+            max_tokens=config.ANTHROPIC_MAX_TOKENS,
+        )
+
     opts = {"num_predict": config.OLLAMA_NUM_PREDICT}
     # Modelos >= 7B: forçar CPU puro. A GeForce MX110 (2GB) só cabe uma fração
     # das camadas e o Ollama fica trocando dados CPU<->GPU — fica MAIS lento que
@@ -108,7 +135,7 @@ def run_stream(question: str, *, strategy: str = "fixed", mode: str = "bm25",
     model = model or config.OLLAMA_MODEL
     if year is None and auto_year:
         year = guess_year(question)
-    _check_ollama(model)
+    _check_backend(model)
     hits = retrieve(question, strategy, mode, k, year)
     if not hits:
         return [], iter(())
@@ -120,7 +147,11 @@ def run_stream(question: str, *, strategy: str = "fixed", mode: str = "bm25",
     return hits, tokens()
 
 
-def _check_ollama(model: str) -> None:
+def _check_backend(model: str) -> None:
+    if is_claude(model):
+        if not os.getenv("ANTHROPIC_API_KEY"):
+            raise SystemExit("ANTHROPIC_API_KEY não definida (veja .env.example).")
+        return
     try:
         tags = httpx.get(f"{config.OLLAMA_BASE_URL}/api/tags", timeout=5).json()
     except Exception:
@@ -148,7 +179,7 @@ def run(question: str, *, strategy: str = "fixed", mode: str = "bm25",
     model = model or config.OLLAMA_MODEL
     if year is None and auto_year:
         year = guess_year(question)
-    _check_ollama(model)
+    _check_backend(model)
 
     hits = retrieve(question, strategy, mode, k, year)
     contexts = [h.node.get_content() for h in hits]

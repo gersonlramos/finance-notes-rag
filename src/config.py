@@ -8,6 +8,11 @@ lugar só e fiquem versionados.
 
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+# Carrega .env (ex: ANTHROPIC_API_KEY) se existir. O .env é gitignored.
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
 # --- Caminhos ------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -68,6 +73,13 @@ OLLAMA_KEEP_ALIVE = "30m"     # mantém o modelo na RAM entre perguntas
 OLLAMA_NUM_PREDICT = 256      # teto de tokens gerados. Sem isto o modelo às vezes
                              # divaga por 1-2 min. A resposta é curta (1-3 frases).
 GENERATION_TEMPERATURE = 0.1  # baixa = factual e reproduzível
+
+# --- Válvula de escape: Claude via API (NÃO local, NÃO grátis) ---------
+# Só é usado quando o modelo escolhido começa com "claude". Precisa de
+# ANTHROPIC_API_KEY no .env. Para a leitura de tabela (o gargalo medido) um
+# modelo forte resolve; o resto do pipeline continua local.
+ANTHROPIC_MODEL = "claude-sonnet-5"   # opus-5 é mais capaz; haiku-4-5 é mais barato
+ANTHROPIC_MAX_TOKENS = 512            # resposta é curta; limita o custo
 
 # LLM juiz do RAGAS (Milestone 5). Local por padrão = grátis mas impreciso.
 # Troque por um modelo forte para números confiáveis.
