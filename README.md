@@ -22,7 +22,7 @@ R$ 1.389.902 mil [Demonstração Financeira 2023.pdf, Balanço patrimonial]
 Além da resposta, a interface mostra **os trechos que o modelo usou**, para
 conferir se a resposta está ancorada no documento.
 
-![Demonstração](docs/media/demo.gif)
+![Demonstração](docs/media/demo_1.gif)
 
 ## Por que este projeto
 
@@ -84,15 +84,15 @@ Ver [docs/arquitetura.md](docs/arquitetura.md).
   ChromaDB (chroma_db/, cosseno)
 ```
 
-| Camada       | Ferramenta                                     | Por quê                                                                    |
-| ------------ | ---------------------------------------------- | -------------------------------------------------------------------------- |
-| Framework    | LlamaIndex                                     | data-first, integra tudo                                                   |
-| Extração PDF | pymupdf4llm + Tesseract-`por`                  | tabelas viram markdown; OCR local para os PDFs escaneados de 2024/2025     |
-| Embeddings   | `paraphrase-multilingual-MiniLM-L12-v2` (ONNX) | ~0,3 s/chunk em CPU; BGE-M3 seria melhor mas leva ~7 s/chunk nesta máquina |
-| Vector DB    | ChromaDB (cosseno)                             | embutido, sem servidor                                                     |
-| Retrieval    | BM25 (`bm25s`) + filtro de metadado            | venceu a busca semântica na avaliação                                      |
-| LLM          | Ollama · `llama3.2:3b` (padrão) · `qwen2.5:7b` · Claude via API (opcional) | local e grátis por padrão; Claude é a válvula de escape para qualidade  |
-| Avaliação    | script próprio determinístico                  | resposta = número; matching direto é mais confiável que juiz LLM fraco     |
+| Camada       | Ferramenta                                                                 | Por quê                                                                    |
+| ------------ | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Framework    | LlamaIndex                                                                 | data-first, integra tudo                                                   |
+| Extração PDF | pymupdf4llm + Tesseract-`por`                                              | tabelas viram markdown; OCR local para os PDFs escaneados de 2024/2025     |
+| Embeddings   | `paraphrase-multilingual-MiniLM-L12-v2` (ONNX)                             | ~0,3 s/chunk em CPU; BGE-M3 seria melhor mas leva ~7 s/chunk nesta máquina |
+| Vector DB    | ChromaDB (cosseno)                                                         | embutido, sem servidor                                                     |
+| Retrieval    | BM25 (`bm25s`) + filtro de metadado                                        | venceu a busca semântica na avaliação                                      |
+| LLM          | Ollama · `llama3.2:3b` (padrão) · `qwen2.5:7b` · Claude via API (opcional) | local e grátis por padrão; Claude é a válvula de escape para qualidade     |
+| Avaliação    | script próprio determinístico                                              | resposta = número; matching direto é mais confiável que juiz LLM fraco     |
 
 ## Estrutura
 
