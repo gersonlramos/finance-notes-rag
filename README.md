@@ -15,6 +15,15 @@ $ python -m src.rag "qual foi o total do ativo em 2023?"
 R$ 1.389.902 mil [Demonstração Financeira 2023.pdf, Balanço patrimonial]
 ```
 
+## Interface
+
+![Interface Streamlit](docs/media/interface.png)
+
+Além da resposta, a interface mostra **os trechos que o modelo usou**, para
+conferir se a resposta está ancorada no documento.
+
+![Demonstração](docs/media/demo.gif)
+
 ## Por que este projeto
 
 - **Problema real:** demonstrações financeiras são densas, cheias de tabelas, e
