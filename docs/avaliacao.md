@@ -49,24 +49,31 @@ Ambiente: 100% local, CPU (i5-8265U). Embeddings `paraphrase-multilingual-MiniLM
 
 ## Experimento: modelo de geração
 
-Mesma config (chunking fixo + `bm25` + ano inferido), variando o LLM do Ollama:
+Mesma config (chunking fixo + `bm25` + ano inferido), variando o LLM:
 
-| Modelo | resposta correta | abstenção | tempo/pergunta |
-|---|---|---|---|
-| `gemma2:2b` | 59% | **falhou** (inventou salário) | 55 s |
-| **`llama3.2:3b`** (padrão) | 65% | 100% | 64 s |
-| `qwen2.5:7b-instruct` | **71%** | 100% | 153 s |
+| Modelo | resposta correta | abstenção | tempo/pergunta | custo |
+|---|---|---|---|---|
+| `gemma2:2b` (local) | 59% | **falhou** | 55 s | US$ 0 |
+| **`llama3.2:3b`** (local, padrão) | 65% | 100% | 64 s | US$ 0 |
+| `qwen2.5:7b-instruct` (local) | 71% | 100% | 153 s | US$ 0 |
+| `claude-sonnet-5` (API) | **76%** | 100% | **3 s** | ~US$ 0,005/pergunta |
 
 - **`gemma2:2b`** é ~15% mais rápido mas quebra a abstenção — inventou "salário
   do técnico R$ 9.756.000" para uma pergunta sem resposta. Descartado.
 - **`qwen2.5:7b`** acerta +6 pontos e mantém a abstenção, ao custo de 2,4× o
-  tempo (~2,5 min/resposta). Fica disponível como opção no seletor da interface.
-- A categoria `balanco` **não melhorou** com o 7B — lá a falha é o retrieval
-  (o chunk certo entra no top-3 só 40% das vezes), não o modelo.
-- Nota: modelos ≥ 7B precisam de `num_gpu=0` nesta máquina — a MX110 (2 GB)
-  não cabe as camadas e o offload deixa ~5× mais lento.
+  tempo. Disponível no seletor; modelos ≥ 7B precisam de `num_gpu=0` (a MX110 de
+  2 GB não cabe as camadas e o offload deixa ~5× mais lento).
+- **`claude-sonnet-5`** (via API, não-local): +11 pontos sobre o padrão, ~20×
+  mais rápido. **Notas explicativas e DRE foram a 100% de acerto.** ~US$ 0,10
+  para as 20 perguntas. É a válvula de escape para qualidade.
 
-`llama3.2:3b` continua o padrão pelo equilíbrio velocidade / qualidade / segurança.
+**O gargalo agora é 100% retrieval.** A categoria `balanco` está travada em
+40% com *todos* os modelos — o chunk do balanço entra no top-3 só 40% das vezes
+para perguntas do tipo "total do ativo". Nenhum modelo conserta chunk que não
+foi recuperado. Próximo passo para subir a acurácia: reranking ou um retrieval
+específico para as demonstrações principais.
+
+`llama3.2:3b` continua o padrão local; `claude-sonnet-5` quando a precisão importa.
 
 ## Experimento: chunking estrutural vs. tamanho fixo
 

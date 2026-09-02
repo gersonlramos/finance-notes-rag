@@ -148,10 +148,14 @@ python -m src.evaluate --report-only   # recalcula do cache, sem LLM
   o que "está incluído"). `qwen2.5:7b` (seletor da interface) sobe para 71% de
   acerto, ao custo de ~2,5 min/resposta. Sempre confira o número no trecho
   exibido abaixo da resposta.
-- **Claude via API (opcional, pago, não-local):** para a leitura de tabela, um
-  modelo forte resolve. Coloque `ANTHROPIC_API_KEY` no `.env` (ver `.env.example`)
-  e os modelos `claude-*` aparecem no seletor. Só a geração vai para a nuvem —
-  extração, embeddings e índice continuam locais.
+- **Claude via API (opcional, pago, não-local):** `claude-sonnet-5` acerta 76%
+  (vs 65% do `llama3.2:3b`), ~20× mais rápido, ~US$ 0,005/pergunta. Coloque
+  `ANTHROPIC_API_KEY` no `.env` (ver `.env.example`) e os modelos `claude-*`
+  aparecem no seletor. Só a geração vai para a nuvem — extração, embeddings e
+  índice continuam locais.
+- **Retrieval do balanço:** "total do ativo" é uma expressão genérica; o chunk
+  do balanço entra no top-3 só ~40% das vezes. É o gargalo atual — nenhum
+  modelo de geração conserta isso.
 - **OCR:** as tabelas de 2024/2025 vêm de OCR; o alinhamento de colunas é
   aproximado.
 - **RAGAS:** exige `langchain 0.2.x` (fixa `numpy<2`), incompatível com o resto
