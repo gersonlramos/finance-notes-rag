@@ -76,6 +76,13 @@ def is_claude(model: str) -> bool:
     return model.lower().startswith("claude")
 
 
+# Modelos Claude que funcionam com o stack atual. Os modelos 5 não aceitam
+# mais `temperature` na API, e o wrapper do LlamaIndex só remove esse
+# parâmetro para esta lista — passar temperature em qualquer outro quebra
+# ("Messages.create() got an unexpected keyword argument 'temperature'").
+CLAUDE_MODELS = ("claude-sonnet-5", "claude-opus-5", "claude-opus-4-8")
+
+
 def get_llm(model: str) -> LLM:
     """
     Devolve o LLM (interface LlamaIndex — .chat()/.stream_chat()).
@@ -92,12 +99,13 @@ def get_llm(model: str) -> LLM:
                 "ANTHROPIC_API_KEY não definida. Coloque a chave no arquivo .env "
                 "(ANTHROPIC_API_KEY=sk-ant-...) para usar um modelo Claude."
             )
-        return Anthropic(
-            model=model,
-            api_key=key,
-            temperature=config.GENERATION_TEMPERATURE,
-            max_tokens=config.ANTHROPIC_MAX_TOKENS,
-        )
+        if model not in CLAUDE_MODELS:
+            raise SystemExit(
+                f"Modelo Claude '{model}' não suportado com o stack atual. "
+                f"Use um destes: {', '.join(CLAUDE_MODELS)}."
+            )
+        # sem `temperature`: os modelos Claude 5 não aceitam mais esse parâmetro.
+        return Anthropic(model=model, api_key=key, max_tokens=config.ANTHROPIC_MAX_TOKENS)
 
     opts = {"num_predict": config.OLLAMA_NUM_PREDICT}
     # Modelos >= 7B: forçar CPU puro. A GeForce MX110 (2GB) só cabe uma fração

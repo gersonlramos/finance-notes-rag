@@ -78,7 +78,8 @@ GENERATION_TEMPERATURE = 0.1  # baixa = factual e reproduzível
 # Só é usado quando o modelo escolhido começa com "claude". Precisa de
 # ANTHROPIC_API_KEY no .env. Para a leitura de tabela (o gargalo medido) um
 # modelo forte resolve; o resto do pipeline continua local.
-ANTHROPIC_MODEL = "claude-sonnet-5"   # opus-5 é mais capaz; haiku-4-5 é mais barato
+ANTHROPIC_MODEL = "claude-sonnet-5"   # ou claude-opus-5 (mais capaz/caro).
+                                     # Ver rag.CLAUDE_MODELS para os suportados.
 ANTHROPIC_MAX_TOKENS = 512            # resposta é curta; limita o custo
 
 # LLM juiz do RAGAS (Milestone 5). Local por padrão = grátis mas impreciso.
